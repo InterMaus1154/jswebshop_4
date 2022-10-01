@@ -1,0 +1,21 @@
+{
+    "articles":[
+        {
+            "title": "Lorem ipsum",
+            "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam\n            a efficitur nibh. Phasellus varius nibh id elit ullamcorper,\n            sit amet gravida justo ultricies. Sed laoreet purus eget velit faucibus fringilla"
+        },
+        {
+            "title": "Morbi sem urna",
+            "content": "Etiam metus leo, consequat id iaculis ac, cursus vel dolor. Quisque cursus diam quam, sed rhoncus dui dignissim nec. Nam id sem id sem fringilla mattis."
+        },
+        {
+            "title": "Donec eu risus dignissim",
+            "content": "tiam nec justo non turpis placerat faucibus. Praesent ultrices odio non finibus aliquam. Aenean rutrum nunc a gravida efficitur. Vivamus sit amet lacus in sem mattis cursus quis efficitur nisi."
+        },
+        {
+            "title": "Vivamus ut ornare nunc.",
+            "content": "Aenean sed nisi metus. Duis arcu lectus, auctor non tortor at, tristique lacinia dui. In id enim mi. Nulla turpis sapien, cursus vitae tincidunt quis, iaculis eu dui."
+        }
+
+    ]
+}
