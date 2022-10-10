@@ -37,6 +37,14 @@ body{
     position: relative;
 }
 
+.basket-empty-text{
+    display: none;
+    text-align: center;
+    margin: 1em;
+    font-size: 1.25em;
+    font-weight: bold;
+}
+
 .basket-button{
     position: fixed;
     bottom: 10px;
@@ -73,12 +81,55 @@ body{
     background: white;
     height: 100%;
     overflow: auto;
-
 }
+
+.popup-bar {
+    opacity: 0;
+    width: auto;
+    height: auto;
+    background: #0071c5;
+    color: white;
+    position: fixed;
+    left: 10px;
+    bottom: -25px;
+    padding: 0.75em;
+    border-radius: 12px;
+}
+
+.popup-bar .popup-text{
+    color: inherit;
+    font-size: 0.9em;
+}
+
+.anim-popup{
+    animation-name: popup-show;
+    animation-duration: 2.5s;
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+}
+
+@keyframes popup-show {
+    15%{
+        opacity: 1;
+        bottom: 25px;
+    }
+    98%{
+        opacity: 1;
+        bottom: 25px;
+    }
+    100%{
+        opacity: 0;
+        bottom: -35%;
+    }
+}
+
 
 @media(max-width: 768px){
     .basket{
         width: 100%;
+    }
+    .popup-bar .popup-text{
+        font-size: 1.1em;
     }
 }
 
@@ -105,6 +156,7 @@ body{
 
 .basket .basket-body{
     margin: 1em;
+
 }
 
 .basket .basket-body .basket-products{
@@ -117,6 +169,7 @@ body{
     border-bottom: 1px solid black;
     margin: 1em 0;
     padding: 1em;
+    position: relative;
 }
 
 .basket .basket-body .basket-products .basket-product:hover{
@@ -146,15 +199,24 @@ body{
 }
 
 .basket .basket-body .basket-products .basket-product .product-misc .interaction-bar input[type="number"]{
+    --border-color: gray;
     font-size: 1em;
-    border: 2px solid gray;
+    border: 2px solid var(--border-color);
     border-radius: 12px;
     width: 75px;
     padding: 5px;
     text-align: center;
 }
+input[type="number"]:focus{
+    outline: none;
+}
 
-
+.alert-bar{
+    display: none;
+    color:#f3702e;
+    font-size: 0.6em;
+    font-weight: bold;
+}
 
 
 header{
@@ -285,18 +347,30 @@ header .logo .logo-image{
     padding: 1em;
 }
 
-.container .latest-bar .counter{
-    margin: 0.5em;
-    background: wheat;
-    border-radius: 360px;
-    display: inline-flex;
-    justify-items: center;
-    align-items: center;
-    padding: 0.25em;
-    font-weight: bold;
-
-    color: #76b900;
+.container .latest-bar .progress-bar{
+    width: 100%;
+    margin-top: -0.5em;
 }
+.container .latest-bar .my-bar{
+    --fill-bar-duration: 9s;
+    width: 0;
+    background: green;
+    height: 5px;
+
+}
+
+.anim{
+    animation-name: fill-bar;
+    animation-duration: var(--fill-bar-duration);
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-fill-mode: backwards;
+}
+
+@keyframes fill-bar {
+    100%{width: 100%}
+}
+
 
 .container .latest-bar .latest-products-container{
     margin: 0.5em 0;
@@ -348,12 +422,21 @@ header .logo .logo-image{
     color: black;
 }
 
+.remove-item-from-basket{
+
+}
+
+.product-qty{
+    display: flex;
+    align-items: center;
+    justify-items: center;
+}
 
 @media(min-width:768px){
     .container .latest-bar .latest-products-container .latest-product-box:hover:before{
         content: attr(data-content-value);
         position: absolute;
-        top: -25%;
+        top: -27%;
         background: #ff9526;
         color: white;
         font-family: 'Alegreya Sans SC', sans-serif;
@@ -408,7 +491,7 @@ header .logo .logo-image{
         grid-column: span 6;
         align-self: center;
         justify-self: center;
-        margin: 2em 0;
+        margin: 3em 0;
         box-shadow: 2px 2px 2px 2px black;
         width: 85%;
     }
@@ -416,7 +499,7 @@ header .logo .logo-image{
     .container .latest-bar .latest-products-container .latest-product-box:before{
         content: attr(data-content-value);
         position: absolute;
-        top: -10%;
+        top: -24%;
         background: #ff9526;
         color: white;
         padding: 0.25em;
@@ -430,7 +513,7 @@ header .logo .logo-image{
 
 
      .add-to-basket-button{
-        display: block;
+         display: block;
     }
 
 }

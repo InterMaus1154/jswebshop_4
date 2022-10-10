@@ -1,14 +1,14 @@
+
 import {
     getArrayOfRandomNumbers,
-    listItems,
     appendElements,
     Product,
+    listItems,
     getTimeForCaching as time,
     pageIDProducts as products,
     pageIDBasket as basket,
     pageIDHome as home,
-    MAX_COUNTDOWN_TIME as MAX_TIME,
-    counter_element as counter
+    MAX_COUNTDOWN_TIME as MAX_TIME
 } from "./module.js";
 
 
@@ -16,19 +16,16 @@ import {
 
 /**I add time to the end of time filename, so the browser will refresh it every time it reloads */
 const json1_location = "products.json?v="+time;
-const json2_location = "articles.json?v="+time;
 
 /**Load data from a separated JSON file, where I store all info of the products*/
 async function getData(documentID){
 
-    const response_1 = await fetch(json1_location);
-    const data_1 = await response_1.json();
+    const response = await fetch(json1_location);
+    const data = await response.json();
 
-    /*!Unnecessarily loaded, fix later, or not idk i honestly dont care!*/
-    const response_2 = await fetch(json2_location);
-    const data_2 = await response_2.json();
+    console.log(data.products[0].processors);
 
-    checkDocumentID(documentID, data_1, data_2);
+    checkDocumentID(documentID, data);
 }
 
 
@@ -36,15 +33,24 @@ const onLoadEvents = (event) =>{
     const currentDocument = event.target.querySelector("html");
     const currentDocumentID = currentDocument.getAttribute("data-page-id")
 
-    getData(currentDocumentID).then(r=>{});
+    getData(currentDocumentID).then(success, fail);
+
+}
+
+function success(){
+    console.log("File has been read successfully");
+}
+
+function fail(){
+    console.log("Error in getting data from JSON. Contact administrator");
 }
 
 /** When the page is loaded, it will call the onLoadEvents function which reads the JSON,
  * and check which subpage is it currently on*/
 window.onload = onLoadEvents;
 
-/*This function checks which page is it currently on, and then pass the appropriate arguments on*/
-function checkDocumentID(documentID, jsonData_1, jsonData_2){
+/*This function checks which page is it currently on, and then pass the appropriate arguments*/
+function checkDocumentID(documentID, jsonData_1){
     switch(documentID){
         case home:
             for(let i=0;i<listItems.length;i++){
@@ -52,11 +58,16 @@ function checkDocumentID(documentID, jsonData_1, jsonData_2){
                     listItems[i].style.textDecoration = "underline";
                 }
             }
-            useDataOnHome(jsonData_1, jsonData_2);
+            useDataOnHome(jsonData_1);
             break;
         case products:
             break;
         case basket:
+            for(let i=0;i<listItems.length;i++){
+                if(listItems[i].querySelector("span").innerText.toLowerCase() == basket.toLowerCase()){
+                    listItems[i].style.textDecoration = "underline";
+                }
+            }
             break;
     }
 }
@@ -71,10 +82,13 @@ addBasketBtn.innerText = "Add to basket";
 /**/
 
 
-function useDataOnHome(jsonData_1, jsonData_2){
+function useDataOnHome(jsonData_1){
+
+    const bar = document.querySelector(".my-bar");
 
     loadProductsIntoLatestBar(jsonData_1);
-    loadGoodToKnowBar(jsonData_2);
+
+    bar.style.setProperty("--fill-bar-duration", (MAX_TIME - 1).toString() + "s");
 
     setInterval(timer, 1000);
 
@@ -82,60 +96,34 @@ function useDataOnHome(jsonData_1, jsonData_2){
     //in {MAX_TIME}(defined in the external module) seconds the newest products bar will be reloaded,
     // and new products will be rendered randomly
     function timer(){
-        counter.innerText = index--;
+        if(index == MAX_TIME){
+            bar.classList.add("anim");
+        }
+        index--;
         if(index == 0){
             loadProductsIntoLatestBar(jsonData_1);
             index = MAX_TIME;
+            bar.classList.remove("anim");
         }
     }
 }
 
 
-/**Load the "Good to know" articles*/
-function loadGoodToKnowBar(jsonData_2){
-    const descBoxesContainer = document.querySelector(".description-boxes");
+function loadProducts(jsonData){
 
-    const descriptionBox = document.createElement("div");
-    descriptionBox.classList.add("description-box");
 
-    const sectionTitle = document.createElement("div");
-    sectionTitle.classList.add("section-title");
 
-    const sectionContent = document.createElement("div");
-    sectionContent.classList.add("section-content");
-
-    const articles = jsonData_2.articles;
-
-    for(let i=0;i<articles.length;i++){
-        sectionTitle.innerText = articles[i].title;
-        sectionContent.innerText = articles[i].content;
-
-        descriptionBox.append(sectionTitle);
-        descriptionBox.append(sectionContent);
-
-        if(i == articles.length - 1){
-            descriptionBox.id = "jumpDown";
-        }
-
-        const descBoxClone = descriptionBox.cloneNode(true);
-
-        descBoxesContainer.append(descBoxClone)
-
-    }
 }
-
-
-
-
 
 
 /**Load the newest products bar */
 function loadProductsIntoLatestBar(jsonData_1){
-
     const latestProductsContainer = document.querySelector(".latest-products-container");
     latestProductsContainer.innerHTML = "";
     const latestProductBox = document.createElement("div");
     latestProductBox.style.setProperty("--delay-time", MAX_TIME - 1 + "s");
+
+
     const processors = jsonData_1.products[0].processors;
     const productImage = document.createElement("img");
 
@@ -194,40 +182,83 @@ function goToProductPage(object){
 //an array containing the elements of basket
 let basketArray = [];
 
+
+const popupStates = {
+    "non-existing":"An item has been added to the basket",
+    "existing":"This item is already in your basket",
+    "removed":"Item has been removed from the basket"
+}
+
 /*A function which adds products to the basket*/
 function addToBasket(event){
     const jsonObject = event.target.parentNode.jsonObject;
     const imageFolder = event.target.parentNode.imageFolder;
 
-    basketArray.push(
-      new Product(jsonObject, imageFolder, 1)
-    );
+   let index = 0;
+   while(index < basketArray.length &&
+       basketArray[index].jsonObject.name != jsonObject.name){
+       index++;
+   }
 
-    updateBasket(false);
+   if(index<basketArray.length){
+        //item already exits in the array
+       popup(popupStates["existing"])
+   }else{
+       //new item added
+       basketArray.push(
+           new Product(jsonObject, imageFolder, 1)
+       );
+       popup(popupStates["non-existing"])
+       updateBasket();
+   }
+
+
     checkIfBasketIsEmpty();
-   
+
 
 }
 
+let popupBarCount = 0;
 
-/**Interaction for responsive dropdown section*/
+//popup for successfully adding an item to the basket, or a message if it already exists there
+function popup(popupState){
+    const popupTextContainer = document.createElement("div");
+    popupTextContainer.classList.add("popup-text");
 
-const openSectionBtn = document.querySelector(".open-section");
-const arrowImage = openSectionBtn.querySelector("img");
-const descBoxesContainer = document.querySelector(".description-boxes");
+    const popupBar = document.createElement("div");
+    popupBar.classList.add("popup-bar");
+    popupBar.classList.add("anim-popup");
+
+    popupTextContainer.innerText = popupState;
+
+    popupBar.append(popupTextContainer);
+
+    const pbClone = popupBar.cloneNode(true);
+    document.body.append(pbClone);
+
+    popupBarCount++;
 
 
-openSectionBtn.addEventListener("click", ()=>{
-   arrowImage.classList.toggle("rotated");
-   descBoxesContainer.classList.toggle("visible-menu");
+    if(popupBarCount == 5){
+        setTimeout(()=>{
+            flush();
+        }, 2650)
 
-   if(arrowImage.classList.contains("rotated")){
-       window.location = "#jumpDown";
-   }else{
-       window.location = "#jumpUp";
-   }
+    }
 
-});
+
+}
+
+//clear unused popup elements from the body
+function flush(){
+
+    const popupBoxes = document.querySelectorAll(".popup-bar");
+
+    popupBoxes.forEach(box => box.remove());
+
+    popupBarCount = 0;
+}
+
 
 
 /*** */
@@ -255,20 +286,19 @@ const basketBtn = document.querySelector(".basket-button");
 const basketElement = document.querySelector(".basket");
 const closeBasketBtn = document.querySelector(".close-basket-button");
 
-const tempElem = document.createElement("p");
+const basketEmptyText = document.createElement("p");
+basketEmptyText.classList.add("basket-empty-text");
+basketEmptyText.innerText = "Basket is empty!";
 
 function checkIfBasketIsEmpty(){
     if(basketArray.length == 0){
-        tempElem.innerText = "Basket is empty!";
-        tempElem.style.textAlign = "center";
-        tempElem.style.margin = "1em";
-        tempElem.style.fontSize = "1.25em";
-		tempElem.style.fontWeight = "bold";
-		
-        basketElement.append(tempElem);
+        basketEmptyText.classList.add("visible-menu");
+        basketElement.append(basketEmptyText);
     }else{
-        tempElem.style.display = "none";
+        basketEmptyText.classList.remove("visible-menu");
     }
+
+    return basketArray.length == 0;
 }
 
 basketBtn.onclick = () =>{
@@ -285,28 +315,113 @@ closeBasketBtn.onclick = () =>{
 
 
 
+const basketProducts = document.querySelector(".basket-products");
 
-function updateBasket(isNew){
-
+function updateBasket(){
     checkIfBasketIsEmpty();
-
-    const basketProducts = document.querySelector(".basket-products");
-
-		const renderedCode =
-            `<div class="basket-product grid">
+    const renderedCode =
+        `<div class="basket-product grid">
                         <div class="product-image">
                             <img src="${basketArray[basketArray.length-1].imageFolder}${basketArray[basketArray.length-1].jsonObject.image_id}.jpg" alt="">
                         </div>
-                        <div class="product-misc">
+                        <div class="product-misc" data-index="${basketArray.length-1}">
                             <div class="product-title">${basketArray[basketArray.length-1].jsonObject.name}  $${basketArray[basketArray.length-1].jsonObject.price}</div>
                             <div class="interaction-bar">
                                 <div class="product-qty">
-                                    <label for="product-quantity">Qty</label>
+                                    <label for="product-quantity" style="margin-right: 10px">Qty</label>
                                     <input id="product-quantity" value=${basketArray[basketArray.length-1].qty} type="number" autocomplete="off" min="1" max="10">
+                                    <div class="remove-item-from-basket"><img src="pics/icons/close.png" title="Remove item from basket" alt="remove item"></div>
                                 </div>
                             </div>
+                            <div class="alert-bar"></div>
                         </div>
                     </div>`;
-		basketProducts.innerHTML += renderedCode;
+    basketProducts.innerHTML += renderedCode;
 
 }
+
+
+
+function reRenderBasket(parent){
+    basketProducts.innerHTML = "";
+
+    const indexInTheArray = parent.getAttribute("data-index");
+
+    let tempArray = [];
+
+    basketArray[indexInTheArray] = undefined;
+
+    for(let elem of basketArray){
+        if(elem != undefined){
+            tempArray.push(elem);
+        }
+    }
+
+    basketArray = tempArray;
+
+    if(!(checkIfBasketIsEmpty())){
+        for(let i=0;i<basketArray.length;i++){
+            const renderedCode =
+                `<div class="basket-product grid">
+                        <div class="product-image">
+                            <img src="${basketArray[i].imageFolder}${basketArray[i].jsonObject.image_id}.jpg" alt="">
+                        </div>
+                        <div class="product-misc" data-index="${i}">
+                            <div class="product-title">${basketArray[i].jsonObject.name}  $${basketArray[i].jsonObject.price}</div>
+                            <div class="interaction-bar">
+                                <div class="product-qty">
+                                    <label for="product-quantity" style="margin-right: 10px">Qty</label>
+                                    <input id="product-quantity" value=${basketArray[i].qty} type="number" autocomplete="off" min="1" max="10">
+                                    <div class="remove-item-from-basket"><img src="pics/icons/close.png" title="Remove item from basket" alt="remove item"></div>
+                                </div>
+                            </div>
+                            <div class="alert-bar"></div>
+                        </div>
+                    </div>`;
+            basketProducts.innerHTML += renderedCode;
+        }
+    }
+
+    popup(popupStates["removed"]);
+
+}
+
+
+document.addEventListener("click", (event)=>{
+  if(event.target.parentNode.classList.contains("remove-item-from-basket")){
+      reRenderBasket(event.target.parentNode.parentNode.parentNode.parentNode);
+  }
+});
+
+
+//check if the number entered for the amount of product is correct or not
+document.addEventListener("change", (event)=>{
+
+    if(event.target.id == "product-quantity"){
+
+        const inputObject = event.target;
+
+        const parent = inputObject.parentNode.parentNode.parentNode;
+
+        const index = parent.getAttribute("data-index");
+
+        const alertBar = parent.querySelector(".alert-bar");
+
+        const MIN = parseInt(inputObject.getAttribute("min"));
+        const MAX = parseInt(inputObject.getAttribute("max"));
+
+        alertBar.innerText = `Give a number between ${MIN} and ${MAX}`;
+
+        const value = parseInt(inputObject.value);
+
+        if(value < MIN || value > MAX || value == NaN){
+            inputObject.style.setProperty("--border-color", "#f3702e");
+            alertBar.classList.add("visible-menu");
+        }else{
+            inputObject.style.setProperty("--border-color", "gray");
+            alertBar.classList.remove("visible-menu");
+            basketArray[index].qty = value;
+        }
+
+   }
+});

@@ -12,7 +12,7 @@ export const counter_element = document.querySelector(".counter");
 
 const nav = document.querySelector("nav");
 
-export const listItems = nav.querySelectorAll("li");
+export const listItems = document.querySelectorAll("li");
 
 export class Product{
     constructor(jsonObject, imageFolder, qty) {
